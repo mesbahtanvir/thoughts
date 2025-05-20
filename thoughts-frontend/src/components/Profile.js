@@ -13,7 +13,7 @@ import {
   Avatar
 } from '@mui/material';
 import { 
-  Email as EmailIcon, 
+  // EmailIcon removed as it's unused
   CheckCircle as CheckCircleIcon, 
   Cancel as CancelIcon,
   ArrowBack as ArrowBackIcon

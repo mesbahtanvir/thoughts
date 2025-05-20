@@ -12,8 +12,8 @@ import {
   Container,
   Avatar,
   Divider,
-  Button,
-  CircularProgress
+  Button
+  // CircularProgress removed as it's unused
 } from '@mui/material';
 import { 
   Logout as LogoutIcon,
@@ -26,6 +26,8 @@ const Home = () => {
   const [thought, setThought] = useState('');
   const [thoughts, setThoughts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  // Using eslint-disable on next line as error state is set but not directly used in UI
+  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
