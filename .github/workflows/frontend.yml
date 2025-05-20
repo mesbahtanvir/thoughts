@@ -47,31 +47,31 @@ jobs:
       run: echo "✅ Build completed successfully in $(pwd)/build"
       
   # Alternative direct deployment approach
-  deploy:
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
-        
-    - name: Install dependencies and build
-      run: |
-        cd ./thoughts-frontend
-        npm ci
-        npm run build
-        
-    - name: Deploy to server
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        source: "./thoughts-frontend/build/*"
-        target: "/var/www/html/ishkul.org/"
-        strip_components: 2
+  # deploy:
+  #   needs: build-and-test
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   runs-on: ubuntu-latest
+  #   
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   
+  #   - name: Set up Node.js
+  #     uses: actions/setup-node@v3
+  #     with:
+  #       node-version: 18
+  #       
+  #   - name: Install dependencies and build
+  #     run: |
+  #       cd ./thoughts-frontend
+  #       npm ci
+  #       npm run build
+  #       
+  #   - name: Deploy to server
+  #     uses: appleboy/scp-action@master
+  #     with:
+  #       host: ${{ secrets.HOST }}
+  #       username: ${{ secrets.USERNAME }}
+  #       key: ${{ secrets.SSH_KEY }}
+  #       source: "./thoughts-frontend/build/*"
+  #       target: "/var/www/html/ishkul.org/"
+  #       strip_components: 2

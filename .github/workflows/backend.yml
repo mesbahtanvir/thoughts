@@ -44,42 +44,42 @@ jobs:
       run: echo "✅ Binary successfully built at $(pwd)/thoughts-backend"
       
   # Alternative deployment approach using direct SSH
-  deploy:
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.20'
-        
-    - name: Build for deployment
-      run: |
-        cd ./thoughts-backend
-        go mod download
-        GOOS=linux GOARCH=amd64 go build -o thoughts-backend ./cmd/thoughts-backend
-        
-    - name: Deploy directly to server
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        source: "./thoughts-backend/thoughts-backend"
-        target: "/home/${{ secrets.USERNAME }}/thoughts-backend/"
-        
-    - name: Configure and start service
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        script: |
-          mkdir -p ~/thoughts-backend
-          chmod +x ~/thoughts-backend/thoughts-backend
-          sudo systemctl stop thoughts-backend || true
-          sudo systemctl start thoughts-backend
+  # deploy:
+  #   needs: build-and-test
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   runs-on: ubuntu-latest
+  #   
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   
+  #   - name: Set up Go
+  #     uses: actions/setup-go@v4
+  #     with:
+  #       go-version: '1.20'
+  #       
+  #   - name: Build for deployment
+  #     run: |
+  #       cd ./thoughts-backend
+  #       go mod download
+  #       GOOS=linux GOARCH=amd64 go build -o thoughts-backend ./cmd/thoughts-backend
+  #       
+  #   - name: Deploy directly to server
+  #     uses: appleboy/scp-action@master
+  #     with:
+  #       host: ${{ secrets.HOST }}
+  #       username: ${{ secrets.USERNAME }}
+  #       key: ${{ secrets.SSH_KEY }}
+  #       source: "./thoughts-backend/thoughts-backend"
+  #       target: "/home/${{ secrets.USERNAME }}/thoughts-backend/"
+  #       
+  #   - name: Configure and start service
+  #     uses: appleboy/ssh-action@master
+  #     with:
+  #       host: ${{ secrets.HOST }}
+  #       username: ${{ secrets.USERNAME }}
+  #       key: ${{ secrets.SSH_KEY }}
+  #       script: |
+  #         mkdir -p ~/thoughts-backend
+  #         chmod +x ~/thoughts-backend/thoughts-backend
+  #         sudo systemctl stop thoughts-backend || true
+  #         sudo systemctl start thoughts-backend
