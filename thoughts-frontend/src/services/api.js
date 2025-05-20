@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api'; // Include /api in the base URL
+// Get API URL from environment variable or use localhost as fallback
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api'; // Include /api in the base URL
+console.log('Using API URL:', API_BASE_URL);
 
 // Helper function to handle API requests
 const apiRequest = async (endpoint, options = {}) => {

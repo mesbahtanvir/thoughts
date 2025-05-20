@@ -5,11 +5,13 @@ on:
     branches: [ main ]
     paths:
       - 'thoughts-backend/**'
+      - 'deployment/terraform/modules/backend/**'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'thoughts-backend/**'
+      - 'deployment/terraform/modules/backend/**'
       - '.github/workflows/backend.yml'
 
 jobs:
@@ -39,47 +41,110 @@ jobs:
     - name: Build
       run: GOOS=linux GOARCH=amd64 go build -o thoughts-backend ./cmd/thoughts-backend
       
-    # Option 1: No artifact storage - successful build is enough
-    - name: Display build success
-      run: echo "✅ Binary successfully built at $(pwd)/thoughts-backend"
-      
-  # Alternative deployment approach using direct SSH
-  # deploy:
-  #   needs: build-and-test
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   runs-on: ubuntu-latest
-  #   
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   
-  #   - name: Set up Go
-  #     uses: actions/setup-go@v4
-  #     with:
-  #       go-version: '1.20'
-  #       
-  #   - name: Build for deployment
-  #     run: |
-  #       cd ./thoughts-backend
-  #       go mod download
-  #       GOOS=linux GOARCH=amd64 go build -o thoughts-backend ./cmd/thoughts-backend
-  #       
-  #   - name: Deploy directly to server
-  #     uses: appleboy/scp-action@master
-  #     with:
-  #       host: ${{ secrets.HOST }}
-  #       username: ${{ secrets.USERNAME }}
-  #       key: ${{ secrets.SSH_KEY }}
-  #       source: "./thoughts-backend/thoughts-backend"
-  #       target: "/home/${{ secrets.USERNAME }}/thoughts-backend/"
-  #       
-  #   - name: Configure and start service
-  #     uses: appleboy/ssh-action@master
-  #     with:
-  #       host: ${{ secrets.HOST }}
-  #       username: ${{ secrets.USERNAME }}
-  #       key: ${{ secrets.SSH_KEY }}
-  #       script: |
-  #         mkdir -p ~/thoughts-backend
-  #         chmod +x ~/thoughts-backend/thoughts-backend
-  #         sudo systemctl stop thoughts-backend || true
-  #         sudo systemctl start thoughts-backend
+    - name: Generate Dockerrun.aws.json
+      run: |
+        echo '{
+          "AWSEBDockerrunVersion": "1",
+          "Image": {
+            "Name": "${ECR_REPOSITORY_URI}:${GITHUB_SHA}",
+            "Update": "true"
+          },
+          "Ports": [
+            {
+              "ContainerPort": 8080,
+              "HostPort": 8080
+            }
+          ],
+          "Logging": "/var/log/thoughts-backend"
+        }' > Dockerrun.aws.json
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-build
+        path: |
+          ./thoughts-backend/thoughts-backend
+          ./thoughts-backend/Dockerfile
+          ./thoughts-backend/Dockerrun.aws.json
+  
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: backend-build
+        path: ./thoughts-backend
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Build and push Docker image to ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: thoughts-backend
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build Docker image
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./thoughts-backend
+        # Push Docker image
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+    
+    - name: Terraform Init
+      working-directory: ./deployment/terraform
+      run: terraform init
+    
+    - name: Terraform Validate
+      working-directory: ./deployment/terraform
+      run: terraform validate
+    
+    - name: Terraform Plan
+      working-directory: ./deployment/terraform
+      run: terraform plan -target=module.backend
+      env:
+        TF_VAR_app_name: "thoughts"
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+    
+    - name: Terraform Apply
+      working-directory: ./deployment/terraform
+      run: terraform apply -target=module.backend -auto-approve
+      env:
+        TF_VAR_app_name: "thoughts"
+        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+        TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+    
+    - name: Deploy to Elastic Beanstalk
+      env:
+        EB_APP_NAME: ${{ secrets.EB_APP_NAME || 'thoughts-prod-backend' }}
+        EB_ENV_NAME: ${{ secrets.EB_ENV_NAME || 'thoughts-prod-backend-env' }}
+      run: |
+        aws elasticbeanstalk create-application-version \
+          --application-name $EB_APP_NAME \
+          --version-label ${{ github.sha }} \
+          --source-bundle S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=backend-${{ github.sha }}.zip
+        
+        aws elasticbeanstalk update-environment \
+          --application-name $EB_APP_NAME \
+          --environment-name $EB_ENV_NAME \
+          --version-label ${{ github.sha }}
