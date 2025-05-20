@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+/thoughts-frontend/node_modules/
+/thoughts-frontend/.pnp
+/thoughts-frontend/.pnp.js
+
+# Testing
+/thoughts-frontend/coverage/
+
+# Production
+/thoughts-frontend/build/
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Go binary files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go specific
+/thoughts-backend/vendor/
+/thoughts-backend/bin/
+*.out
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
