@@ -1,18 +1,15 @@
-name: Frontend CI/CD
+name: Build and Test Frontend
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'thoughts-frontend/**'
-      - 'deployment/terraform/modules/frontend/**'
-      - '.github/workflows/frontend.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'thoughts-frontend/**'
-      - 'deployment/terraform/modules/frontend/**'
-      - '.github/workflows/frontend.yml'
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -41,88 +38,8 @@ jobs:
     - name: Run tests
       run: npm test
       
-    - name: Build
+    - name: Verify build
       run: npm run build
       env:
-        # Update API URL for production build if needed
-        REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL || 'http://localhost:8080/api' }}
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: frontend-build
-        path: ./thoughts-frontend/build
-  
-  deploy:
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: frontend-build
-        path: ./thoughts-frontend/build
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.0
-    
-    - name: Terraform Init
-      working-directory: ./deployment/terraform
-      run: terraform init
-    
-    - name: Terraform Validate
-      working-directory: ./deployment/terraform
-      run: terraform validate
-    
-    - name: Terraform Plan
-      working-directory: ./deployment/terraform
-      run: terraform plan -target=module.frontend
-      env:
-        TF_VAR_app_name: "thoughts"
-        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-        TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
-    
-    - name: Terraform Apply
-      working-directory: ./deployment/terraform
-      run: terraform apply -target=module.frontend -auto-approve
-      env:
-        TF_VAR_app_name: "thoughts"
-        TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-        TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
-    
-    - name: Get S3 bucket name from Terraform outputs
-      id: get-s3-bucket
-      working-directory: ./deployment/terraform
-      run: |
-        S3_BUCKET=$(terraform output -raw module.frontend.s3_bucket_name)
-        echo "s3_bucket=$S3_BUCKET" >> $GITHUB_OUTPUT
-    
-    - name: Get CloudFront distribution ID from Terraform outputs
-      id: get-cloudfront-id
-      working-directory: ./deployment/terraform
-      run: |
-        CF_ID=$(terraform output -raw module.frontend.cloudfront_distribution_id)
-        echo "cf_id=$CF_ID" >> $GITHUB_OUTPUT
-    
-    - name: Deploy to S3
-      run: |
-        aws s3 sync ./thoughts-frontend/build/ s3://${{ steps.get-s3-bucket.outputs.s3_bucket }}/ --delete
-    
-    - name: Invalidate CloudFront cache
-      run: |
-        aws cloudfront create-invalidation \
-          --distribution-id ${{ steps.get-cloudfront-id.outputs.cf_id }} \
-          --paths "/*"
+        # Use localhost for local testing
+        REACT_APP_API_URL: 'http://localhost:8080/api'
