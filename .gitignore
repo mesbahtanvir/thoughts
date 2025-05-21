@@ -1,14 +1,14 @@
 # Dependencies
 node_modules/
-/thoughts-frontend/node_modules/
-/thoughts-frontend/.pnp
-/thoughts-frontend/.pnp.js
+/frontend/node_modules/
+/frontend/.pnp
+/frontend/.pnp.js
 
 # Testing
-/thoughts-frontend/coverage/
+/frontend/coverage/
 
 # Production
-/thoughts-frontend/build/
+/frontend/build/
 
 # Misc
 .DS_Store
@@ -31,8 +31,8 @@ yarn-error.log*
 *.dylib
 
 # Go specific
-/thoughts-backend/vendor/
-/thoughts-backend/bin/
+/backend/vendor/
+/backend/bin/
 *.out
 
 # IDE specific files
@@ -40,3 +40,16 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraformrc
+terraform.rc
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
