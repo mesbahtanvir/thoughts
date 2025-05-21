@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/yourusername/thoughts-backend/internal/models"
+	"github.com/yourusername/backend/internal/models"
 )
 
 type Client struct {

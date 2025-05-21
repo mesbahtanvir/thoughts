@@ -3,7 +3,7 @@ package auth
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/yourusername/thoughts-backend/internal/models"
+	"github.com/yourusername/backend/internal/models"
 	"gorm.io/gorm"
 	"os"
 	"strings"

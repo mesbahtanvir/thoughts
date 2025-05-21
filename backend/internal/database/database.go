@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/yourusername/thoughts-backend/internal/models"
+	"github.com/yourusername/backend/internal/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

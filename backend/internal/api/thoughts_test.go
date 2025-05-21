@@ -12,8 +12,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/yourusername/thoughts-backend/internal/models"
-	"github.com/yourusername/thoughts-backend/internal/testutils"
+	"github.com/yourusername/backend/internal/models"
+	"github.com/yourusername/backend/internal/testutils"
 	"gorm.io/gorm"
 )
 

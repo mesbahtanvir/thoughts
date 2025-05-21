@@ -4,11 +4,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'thoughts-frontend/**'
+      - 'frontend/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'thoughts-frontend/**'
+      - 'frontend/**'
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./thoughts-frontend
+        working-directory: ./frontend
         
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
       with:
         node-version: 18
         cache: 'npm'
-        cache-dependency-path: ./thoughts-frontend/package-lock.json
+        cache-dependency-path: ./frontend/package-lock.json
         
     - name: Install dependencies
       run: npm ci

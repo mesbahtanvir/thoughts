@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/yourusername/thoughts-backend/internal/auth"
-	"github.com/yourusername/thoughts-backend/internal/models"
+	"github.com/yourusername/backend/internal/auth"
+	"github.com/yourusername/backend/internal/models"
 	"gorm.io/gorm"
 )
 

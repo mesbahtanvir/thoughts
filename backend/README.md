@@ -23,7 +23,7 @@ A Go backend for the Thoughts application that handles user authentication and t
 
 1. Start the server:
    ```bash
-   go run cmd/thoughts-backend/main.go
+   go run cmd/backend/main.go
    ```
 
 ## API Endpoints

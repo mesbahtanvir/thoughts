@@ -7,7 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/yourusername/thoughts-backend/internal/models"
+	"github.com/yourusername/backend/internal/models"
 	"gorm.io/gorm"
 )
 

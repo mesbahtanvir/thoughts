@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/yourusername/thoughts-backend/internal/api"
-	"github.com/yourusername/thoughts-backend/internal/database"
+	"github.com/yourusername/backend/internal/api"
+	"github.com/yourusername/backend/internal/database"
 	"gorm.io/gorm"
 )
 

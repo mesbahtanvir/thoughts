@@ -8,7 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
-	"github.com/yourusername/thoughts-backend/internal/testutils"
+	"github.com/yourusername/backend/internal/testutils"
 )
 
 func TestRegister(t *testing.T) {

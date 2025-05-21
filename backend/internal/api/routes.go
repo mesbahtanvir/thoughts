@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/yourusername/thoughts-backend/internal/auth"
+	"github.com/yourusername/backend/internal/auth"
 	"gorm.io/gorm"
 )
 

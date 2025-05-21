@@ -1,4 +1,4 @@
-module github.com/yourusername/thoughts-backend
+module github.com/yourusername/backend
 
 go 1.21
 
