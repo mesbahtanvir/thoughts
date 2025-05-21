@@ -1,0 +1,116 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'deployment/terraform/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'deployment/terraform/**'
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: Terraform Validation and Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+        
+    # Initialize the directory
+    - name: Terraform Init
+      id: init
+      run: terraform init -backend=false
+      working-directory: ./deployment/terraform
+
+    # Check Terraform formatting
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check -recursive
+      working-directory: ./deployment/terraform
+      continue-on-error: true
+      
+    # Validate the Terraform configuration
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate
+      working-directory: ./deployment/terraform
+      
+    # Run tfsec to check for security issues
+    - name: tfsec
+      uses: aquasecurity/tfsec-action@v1.0.0
+      with:
+        working-directory: ./deployment/terraform
+        
+    # Run checkov for security and compliance scanning  
+    - name: Checkov
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: ./deployment/terraform
+        framework: terraform
+        quiet: true
+        soft_fail: true
+        
+    # Generate a plan for informational purposes on pull requests
+    - name: Terraform Plan
+      id: plan
+      if: github.event_name == 'pull_request'
+      run: terraform plan -no-color -input=false
+      working-directory: ./deployment/terraform
+      continue-on-error: true
+      
+    # Add report comment to PR
+    - name: Add Report Comment to PR
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `## Terraform Validation Results
+          
+          ### Format and Style 🖌 ${{ steps.fmt.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          ${steps.fmt.outcome == 'failure' ? '⚠️ Please run `terraform fmt -recursive` to fix formatting issues.\n\n' : ''}
+          
+          ### Initialization ⚙️ ${{ steps.init.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          
+          ### Validation 🤖 ${{ steps.validate.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          
+          ### Security Scan 🔒 
+          Security scanning results can be found in the workflow logs.
+          
+          ### Terraform Plan 📖 ${{ steps.plan.outcome == 'success' && '✅ Generated' || '❌ Failed' }}
+          
+          <details><summary>Show Plan</summary>
+          
+          \`\`\`terraform
+          ${{ steps.plan.outputs.stdout || 'No plan output available' }}
+          \`\`\`
+          
+          </details>
+          
+          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+          
+    # Post a status summary
+    - name: Status Summary
+      run: |
+        echo "## Terraform Validation Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "* Format Check: ${{ steps.fmt.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "* Initialization: ${{ steps.init.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "* Validation: ${{ steps.validate.outcome == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "* Security Scan: ✅ Completed" >> $GITHUB_STEP_SUMMARY
