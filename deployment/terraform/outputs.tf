@@ -13,3 +13,19 @@ output "frontend_url" {
   description = "URL of the deployed frontend application"
   value       = "https://${module.frontend.cloudfront_domain_name}"
 }
+
+# Backend outputs
+output "backend_public_ip" {
+  description = "Public IP address of the backend EC2 instance"
+  value       = module.backend.public_ip
+}
+
+output "backend_public_dns" {
+  description = "Public DNS of the backend EC2 instance"
+  value       = module.backend.public_dns
+}
+
+output "backend_security_group_id" {
+  description = "ID of the security group for the backend"
+  value       = module.backend.security_group_id
+}
