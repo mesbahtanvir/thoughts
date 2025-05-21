@@ -1,3 +1,4 @@
+# Build stage
 FROM golang:1.20-alpine AS builder
 
 # Set working directory
@@ -15,7 +16,7 @@ COPY . .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o backend ./cmd/backend
 
-# Use a small alpine image for the final stage
+# Final stage
 FROM alpine:latest
 
 # Install necessary runtime dependencies
@@ -27,12 +28,26 @@ WORKDIR /app
 # Copy the binary from the builder stage
 COPY --from=builder /app/backend /app/backend
 
-# Copy any required configuration files
-COPY --from=builder /app/.env /app/.env
-COPY --from=builder /app/thoughts.db /app/thoughts.db
+# Create a non-root user
+RUN adduser -D -g '' appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
-# Expose port
-EXPOSE 8080
+# Create directories that need to be writable
+RUN mkdir -p /app/data && \
+    chown -R appuser:appuser /app/data
 
-# Start the application
-CMD ["/app/backend"]
+# Build arguments
+ARG JWT_SECRET=default_jwt_secret_change_in_production
+ARG ENVIRONMENT=production
+
+# Environment variables
+ENV PORT=8080
+ENV JWT_SECRET=${JWT_SECRET}
+ENV ENVIRONMENT=${ENVIRONMENT}
+
+# Expose the port the app runs on
+EXPOSE $PORT
+
+# Set the entry point
+ENTRYPOINT ["/app/backend"]

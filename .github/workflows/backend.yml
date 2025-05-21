@@ -55,12 +55,19 @@ jobs:
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
+      env:
+        JWT_SECRET: ${{ secrets.JWT_SECRET || 'default_jwt_secret_change_in_production' }}
+        ENVIRONMENT: production
       with:
         context: ./backend
         push: ${{ github.ref == 'refs/heads/main' }}
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          JWT_SECRET=$$JWT_SECRET
+          ENVIRONMENT=$$ENVIRONMENT
         cache-from: type=gha
         cache-to: type=gha,mode=max
         labels: |
