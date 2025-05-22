@@ -23,6 +23,13 @@ resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
 }
 
 # Allow EC2 to pull from ECR and GHCR
+locals {
+  ecr_repository_arn = "arn:aws:ecr:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:repository/${var.app_name}-${var.environment}-backend"
+}
+
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role_policy" "ecr_pull_policy" {
   name = "${var.app_name}-${var.environment}-ecr-pull-policy"
   role = aws_iam_role.ec2_role.id
@@ -33,12 +40,18 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
       {
         Effect = "Allow"
         Action = [
-          "ecr:GetAuthorizationToken",
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage"
         ]
-        Resource = "*"
+        Resource = [local.ecr_repository_arn]
       },
       {
         Effect = "Allow"
@@ -47,7 +60,7 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:*:*:*"
+        Resource = "arn:aws:logs:*:*:log-group:/aws/ec2/${var.app_name}-${var.environment}-*"
       }
     ]
   })
@@ -65,17 +78,36 @@ resource "aws_security_group" "ec2_sg" {
   description = "Security group for backend EC2 instance"
   vpc_id      = var.vpc_id
 
-  # SSH access from anywhere (restrict in production!)
+  # SSH access - restrict to specific IP in production
   ingress {
+    description = "SSH access"
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # TODO: Restrict to your IP in production
+  }
+
+  # HTTP access
+  ingress {
+    description = "HTTP access"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # HTTPS access
+  ingress {
+    description = "HTTPS access"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-  # Allow all outbound traffic
+  # Outbound traffic
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

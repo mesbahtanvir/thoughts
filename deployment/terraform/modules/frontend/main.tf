@@ -12,6 +12,52 @@ resource "aws_s3_bucket" "frontend" {
   }
 }
 
+# Enable S3 bucket versioning
+resource "aws_s3_bucket_versioning" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Enable default server-side encryption
+resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Create a logging bucket
+resource "aws_s3_bucket" "logs" {
+  bucket = "${var.app_name}-${var.environment}-frontend-logs"
+  
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-frontend-logs"
+    Environment = var.environment
+  }
+}
+
+# Enable logging for the frontend bucket
+resource "aws_s3_bucket_logging" "frontend" {
+  bucket        = aws_s3_bucket.frontend.id
+  target_bucket = aws_s3_bucket.logs.id
+  target_prefix = "s3-logs/"
+}
+
+# Block public access for logs bucket
+resource "aws_s3_bucket_public_access_block" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 # Configure the bucket for website hosting
 resource "aws_s3_bucket_website_configuration" "frontend" {
   bucket = aws_s3_bucket.frontend.id
@@ -57,6 +103,56 @@ data "aws_iam_policy_document" "frontend_s3_policy" {
       variable = "AWS:SourceArn"
       values   = [aws_cloudfront_distribution.frontend.arn]
     }
+  }
+}
+
+###########################
+# WAF Configuration
+###########################
+
+resource "aws_wafv2_web_acl" "frontend" {
+  name        = "${var.app_name}-${var.environment}-waf"
+  description = "WAF Web ACL for ${var.app_name} frontend"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${var.app_name}-${var.environment}-waf-metrics"
+    sampled_requests_enabled   = true
+  }
+
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-waf"
+    Environment = var.environment
   }
 }
 
@@ -127,12 +223,23 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1.3"
+    ssl_support_method             = "sni-only"
   }
+
+  logging_config {
+    include_cookies = false
+    bucket          = aws_s3_bucket.logs.bucket_regional_domain_name
+    prefix          = "cloudfront-logs/"
+  }
+
+  web_acl_id = aws_wafv2_web_acl.frontend.arn
 
   # Uncomment if you want to use a custom domain with SSL
   # viewer_certificate {
   #   acm_certificate_arn = var.certificate_arn
   #   ssl_support_method  = "sni-only"
+  #   minimum_protocol_version = "TLSv1.2_2021"
   # }
 
   # Add the custom domain as an alias
