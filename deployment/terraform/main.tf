@@ -37,4 +37,5 @@ module "backend" {
   key_name     = var.ec2_key_name
   github_token = var.github_token
   jwt_secret   = var.jwt_secret
+  allowed_ips  = var.allowed_ips
 }

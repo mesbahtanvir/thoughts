@@ -34,3 +34,14 @@ variable "jwt_secret" {
   sensitive   = true
   default     = "default-insecure-secret-change-me" # In production, always set this explicitly
 }
+
+variable "allowed_ips" {
+  type        = list(string)
+  description = "List of allowed IP addresses in CIDR notation (e.g., [\"123.45.67.89/32\"])"
+  default     = []
+  
+  validation {
+    condition     = alltrue([for ip in var.allowed_ips : can(regex("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$", ip))])
+    error_message = "Each IP must be a valid IPv4 CIDR block (e.g., 192.168.1.1/32)."
+  }
+}
