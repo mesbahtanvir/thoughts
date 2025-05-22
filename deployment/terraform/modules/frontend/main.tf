@@ -21,7 +21,7 @@ resource "aws_s3_bucket_website_configuration" "frontend" {
   }
 
   error_document {
-    key = "index.html"  # SPA fallback for client-side routing
+    key = "index.html" # SPA fallback for client-side routing
   }
 }
 
@@ -37,8 +37,8 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 
 # Bucket policy to allow CloudFront access
 resource "aws_s3_bucket_policy" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-  policy = data.aws_iam_policy_document.frontend_s3_policy.json
+  bucket     = aws_s3_bucket.frontend.id
+  policy     = data.aws_iam_policy_document.frontend_s3_policy.json
   depends_on = [aws_s3_bucket_public_access_block.frontend]
 }
 

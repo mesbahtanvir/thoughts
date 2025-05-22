@@ -1,7 +1,7 @@
 # Create an IAM role for the EC2 instance
 resource "aws_iam_role" "ec2_role" {
   name = "${var.app_name}-${var.environment}-ec2-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -95,7 +95,7 @@ resource "aws_instance" "backend" {
   key_name               = var.key_name
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
-  user_data              = templatefile("${path.module}/user_data.sh", {
+  user_data = templatefile("${path.module}/user_data.sh", {
     app_name     = var.app_name
     environment  = var.environment
     github_token = var.github_token
@@ -121,7 +121,7 @@ resource "aws_instance" "backend" {
 resource "aws_eip" "backend_eip" {
   instance = aws_instance.backend.id
   domain   = "vpc"
-  
+
   tags = {
     Name = "${var.app_name}-${var.environment}-backend-eip"
   }
