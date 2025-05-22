@@ -107,12 +107,5 @@ jobs:
         echo "Image pushed to: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
         echo "Tags: ${{ steps.meta.outputs.tags }}"
 
-    - name: Update deployment status
-      if: always()
-      uses: bobheadxi/deployments@v1
-      with:
-        step: finish
-        status: ${{ job.status }}
-        env: ${{ github.event.inputs.environment || 'staging' }}
-        deployment_id: ${{ github.run_id }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+    # Deployment status updates removed as they require additional setup
+    # and are not critical for the build process
