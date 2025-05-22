@@ -1,8 +1,15 @@
-# Build stage
-FROM golang:1.20-alpine AS builder
+FROM golang:1.21-bullseye AS builder
 
 # Set working directory
 WORKDIR /app
+
+# Install dependencies for CGO and SQLite
+RUN apt-get update && apt-get install -y \
+    git \
+    gcc \
+    libsqlite3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
@@ -13,41 +20,40 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o backend ./cmd/backend
+# Build the application with CGO enabled for SQLite
+RUN CGO_ENABLED=1 GOOS=linux go build -a -o backend ./cmd/backend
 
-# Final stage
-FROM alpine:latest
+# Final stage - use Debian slim for smaller size but compatible with the builder
+FROM debian:bullseye-slim
 
-# Install necessary runtime dependencies
-RUN apk --no-cache add ca-certificates
+# Install required packages for production
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    tzdata \
+    sqlite3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy the binary from the builder stage
-COPY --from=builder /app/backend /app/backend
+# Copy binary from builder stage
+COPY --from=builder /app/backend .
 
-# Create a non-root user
-RUN adduser -D -g '' appuser && \
-    chown -R appuser:appuser /app
-USER appuser
-
-# Create directories that need to be writable
-RUN mkdir -p /app/data && \
-    chown -R appuser:appuser /app/data
+# Create directory for SQLite database
+RUN mkdir -p /app/data
 
 # Build arguments
-ARG JWT_SECRET=default_jwt_secret_change_in_production
+ARG JWT_SECRET
 ARG ENVIRONMENT=production
 
-# Environment variables
+# Set environment variables
 ENV PORT=8080
 ENV JWT_SECRET=${JWT_SECRET}
 ENV ENVIRONMENT=${ENVIRONMENT}
 
-# Expose the port the app runs on
-EXPOSE $PORT
+# Expose the application port
+EXPOSE 8080
 
-# Set the entry point
-ENTRYPOINT ["/app/backend"]
+# Command to run the executable
+CMD ["./backend"]

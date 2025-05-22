@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - JWT_SECRET=${JWT_SECRET}
+        - ENVIRONMENT=${ENVIRONMENT:-production}
+    container_name: thoughts-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=production
+      - DB_PATH=/app/data/thoughts.db
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
