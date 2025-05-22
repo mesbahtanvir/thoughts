@@ -38,13 +38,13 @@ jobs:
       working-directory: ./deployment/terraform
       continue-on-error: true
       
-    # Validate the Terraform configuration
+    # Validate the Terraform configuration with mock values
     - name: Terraform Validate
       id: validate
-      run: terraform validate
+      run: |
+        terraform validate -backend=false
+        terraform validate -var="github_token=dummy_token" -var="jwt_secret=dummy_secret" -var="app_name=test" -var="environment=test"
       working-directory: ./deployment/terraform
-      env:
-        TF_VAR_github_token: ${{ secrets.GITHUB_TOKEN }}  # Passed as environment variable
       
     # Run tfsec to check for security issues
     - name: tfsec
