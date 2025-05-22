@@ -61,3 +61,4 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 backend/internal/api/*.db
+backend/internal/api/thoughts.db
