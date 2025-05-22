@@ -41,11 +41,10 @@ jobs:
     # Validate the Terraform configuration
     - name: Terraform Validate
       id: validate
-      run: |
-        terraform validate -var="github_token=${{ secrets.GITHUB_TOKEN }}"
+      run: terraform validate
       working-directory: ./deployment/terraform
       env:
-        TF_VAR_github_token: ${{ secrets.GITHUB_TOKEN }}
+        TF_VAR_github_token: ${{ secrets.GITHUB_TOKEN }}  # Passed as environment variable
       
     # Run tfsec to check for security issues
     - name: tfsec
