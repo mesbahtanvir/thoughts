@@ -165,34 +165,22 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = var.allowed_ips
   }
 
-  # Allow HTTP outbound to specific AWS service endpoints
+  # Allow HTTP outbound
   egress {
-    description = "Allow outbound HTTP traffic to AWS service endpoints"
+    description = "Allow outbound HTTP traffic"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    prefix_list_ids = [
-      data.aws_ec2_managed_prefix_list.s3.id,
-      data.aws_ec2_managed_prefix_list.ecr.id,
-      data.aws_ec2_managed_prefix_list.ec2messages.id,
-      data.aws_ec2_managed_prefix_list.ssm.id,
-      data.aws_ec2_managed_prefix_list.ssmmessages.id
-    ]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Allow HTTPS outbound to specific AWS service endpoints
+  # Allow HTTPS outbound
   egress {
-    description = "Allow outbound HTTPS traffic to AWS service endpoints"
+    description = "Allow outbound HTTPS traffic"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    prefix_list_ids = [
-      data.aws_ec2_managed_prefix_list.s3.id,
-      data.aws_ec2_managed_prefix_list.ecr.id,
-      data.aws_ec2_managed_prefix_list.ec2messages.id,
-      data.aws_ec2_managed_prefix_list.ssm.id,
-      data.aws_ec2_managed_prefix_list.ssmmessages.id
-    ]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow NTP outbound
