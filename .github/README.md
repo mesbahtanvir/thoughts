@@ -61,6 +61,41 @@ This directory contains the GitHub Actions workflows that power the CI/CD pipeli
    - Runs database migrations
    - Updates service configuration
 
+## 🏗️ Project Structure
+
+```
+.
+├── backend/                  # Go backend application
+│   ├── cmd/                  # Application entry points
+│   │   └── backend/          # Main application entry point
+│   ├── internal/             # Core application code
+│   │   ├── api/             # HTTP handlers and routes
+│   │   ├── auth/            # Authentication logic
+│   │   └── models/          # Data models
+│   └── go.mod               # Go module definition
+│
+├── deployment/             # Infrastructure as Code
+│   └── terraform/           # Terraform configurations
+│       ├── modules/         # Reusable infrastructure modules
+│       │   ├── backend/    # Backend infrastructure (EC2, security groups, etc.)
+│       │   └── frontend/   # Frontend infrastructure (S3, CloudFront)
+│       ├── main.tf         # Main Terraform configuration
+│       ├── variables.tf    # Variable definitions
+│       └── outputs.tf     # Output values
+│
+├── frontend/               # React frontend application
+│   ├── public/             # Static files
+│   └── src/                # Source code
+│       ├── components/     # React components
+│       ├── services/       # API services
+│       └── App.js          # Main application component
+│
+├── .github/workflows/     # GitHub Actions workflows
+│   ├── backend.yml        # Backend CI/CD workflow
+│   └── frontend.yml       # Frontend CI/CD workflow
+└── LICENSE                # MIT License
+```
+
 ## 🔑 Required Secrets
 
 These secrets must be configured in your GitHub repository settings:
@@ -78,6 +113,62 @@ These secrets must be configured in your GitHub repository settings:
 - `JWT_SECRET`: Secret key for JWT token generation
 - `DB_CONNECTION_STRING`: Database connection string
 - `ENVIRONMENT`: Deployment environment (e.g., `production`, `staging`)
+
+## ☁️ Production Deployment
+
+### Infrastructure Overview
+
+The application is deployed on AWS with the following components:
+
+- **Frontend**
+  - S3 bucket for static assets
+  - CloudFront CDN for global distribution
+  - HTTPS with custom domain support
+
+- **Backend**
+  - EC2 instance (t3.micro)
+  - Security groups with restricted access
+  - Managed by Terraform
+
+### Deployment Process
+
+1. **Prerequisites**
+   - AWS account with appropriate permissions
+   - Terraform installed and configured
+   - AWS CLI configured with credentials
+
+2. **Deploy Infrastructure**
+   ```bash
+   cd deployment/terraform
+   # Initialize Terraform
+   terraform init
+   
+   # Review the execution plan
+   terraform plan -var="app_name=thoughts" \
+                 -var="environment=production" \
+                 -var="jwt_secret=your-secret-key" \
+                 -var="github_token=your-github-token"
+   
+   # Apply the configuration
+   terraform apply -var="app_name=thoughts" \
+                  -var="environment=production" \
+                  -var="jwt_secret=your-secret-key" \
+                  -var="github_token=your-github-token"
+   ```
+
+3. **Deploy Backend**
+   The backend is automatically built and pushed to GitHub Container Registry on push to main.
+   The EC2 instance is configured to pull the latest image on startup.
+
+4. **Deploy Frontend**
+   ```bash
+   cd ../../frontend
+   # Build the production bundle
+   npm run build
+   
+   # Sync with S3 (replace with your bucket name)
+   aws s3 sync build/ s3://your-frontend-bucket --delete
+   ```
 
 ## 🚀 Deployment
 

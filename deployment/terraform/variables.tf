@@ -47,9 +47,9 @@ variable "allowed_ips" {
   default     = []
 
   validation {
-    # Simple validation that checks for a basic IP/CIDR pattern
-    # This is less strict but avoids complex regex escaping issues
     condition     = alltrue([for ip in var.allowed_ips : can(regex("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}(/[0-9]{1,2})?$", ip))])
     error_message = "Each IP must be a valid IPv4 CIDR block (e.g., 192.168.1.1/32)."
   }
 }
+
+

@@ -13,6 +13,36 @@ This directory contains Terraform configurations for deploying the Thoughts appl
 - **S3 Bucket**: thoughts-prod-frontend
 - **CloudFront Distribution ID**: E3E2N09OEQKCJI
 
+## Security
+
+### Environment Variables
+
+The following sensitive values are managed as Terraform variables and should be set in your environment or CI/CD pipeline:
+
+- `JWT_SECRET`: Used for signing JWT tokens
+  - Generate a strong secret: `openssl rand -base64 32`
+  - Marked as sensitive in Terraform
+  - Never commit to version control
+
+- `GITHUB_TOKEN`: Personal access token for pulling container images from GitHub Container Registry
+  - Must have `read:packages` scope
+  - Managed as a sensitive variable in Terraform
+
+### Secrets Management
+
+1. **Local Development**:
+   - Use a `.env` file (not committed to version control)
+   - Add `.env` to `.gitignore`
+
+2. **CI/CD**:
+   - Store secrets in GitHub Secrets
+   - Pass them to Terraform using environment variables
+
+3. **Production**:
+   - Use AWS Secrets Manager or Parameter Store
+   - Rotate secrets regularly
+   - Follow principle of least privilege
+
 ## Prerequisites
 
 - AWS CLI configured with appropriate credentials

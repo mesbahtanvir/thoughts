@@ -157,6 +157,27 @@ The project includes GitHub Actions workflows for:
 - Frontend deployment on push to main
 - Security scanning with tfsec and Checkov
 
+## 🔒 Security
+
+### Authentication & Authorization
+- All API endpoints are protected with JWT authentication
+- JWT tokens are signed using the `JWT_SECRET` environment variable
+  - **Important**: Always use a strong, random string for production
+  - Never commit the actual secret to version control
+  - Rotate the secret periodically in production environments
+
+### Environment Variables
+- Sensitive configuration is managed through environment variables
+- Required variables:
+  - `JWT_SECRET`: Used for signing and verifying JWT tokens
+  - `PORT`: Port the backend server listens on (default: 8080)
+  - `DATABASE_URL`: Database connection string (for non-SQLite environments)
+
+### Security Scanning
+- Regular security scanning with tfsec and Checkov
+- Dependabot for dependency updates
+- GitHub Actions workflows for automated security checks
+
 ## 🔧 Maintenance
 
 ### Database Migrations

@@ -12,3 +12,9 @@ output "cloudfront_url" {
   # This output depends on the CloudFront distribution being created
   depends_on = [aws_cloudfront_distribution.frontend]
 }
+
+# Output the API URL used by the frontend
+output "api_url" {
+  description = "API URL that the frontend is configured to use"
+  value       = var.api_url
+}

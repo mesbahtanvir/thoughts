@@ -1,50 +1,42 @@
 # GitHub Actions Workflows
 
-This directory contains the GitHub Actions workflows that power the CI/CD pipeline for the Thoughts application. These workflows automate the build, test, and deployment processes.
+This directory contains the GitHub Actions workflows that automate the build, test, and deployment processes for the Thoughts application.
 
 ## 🏗️ Workflow Structure
 
 ### 1. Backend Workflow ([backend.yml](backend.yml))
 
-**Purpose**: Build, test, and deploy the Go backend service
+**Purpose**: Build, test, and package the Go backend service
 
 **Trigger Events**:
 - Push to `main` branch (changes in `backend/` directory)
 - Pull requests to `main` branch
 - Manual workflow dispatch
-- Scheduled (if configured)
 
 **Jobs**:
 1. **Build and Test**
-   - Sets up Go 1.20+ environment
+   - Sets up Go 1.20 environment
    - Caches Go modules for faster builds
-   - Runs unit and integration tests
-   - Performs code coverage analysis
-   - Runs security scans (if configured)
+   - Installs dependencies
+   - Runs tests with `go test`
    - Verifies the build
 
 2. **Docker Image Build**
    - Sets up Docker Buildx for multi-architecture builds
    - Logs in to GitHub Container Registry (GHCR)
-   - Builds and pushes Docker images for multiple platforms:
+   - Builds and pushes Docker images for:
      - `linux/amd64`
      - `linux/arm64`
    - Tags images with:
      - `latest` (only on main branch)
      - Commit SHA
-     - Branch/Tag name (for PRs and releases)
-     - Version tags (e.g., `v1.0.0`)
-   - Adds metadata labels for better traceability:
-     - Git commit SHA
-     - Build timestamp
-     - Build URL
+     - Branch name (for PRs)
+     - Version tags (for releases)
+   - Adds metadata labels for traceability
 
-3. **Deploy to AWS** (if enabled)
-   - Sets up AWS credentials
-   - Deploys using AWS CDK/Terraform
-   - Runs database migrations
-   - Updates service configuration
-   - Verifies deployment health
+**Notes**:
+- The backend is deployed to an EC2 instance configured via Terraform
+- The EC2 instance is configured to pull the latest image on startup
 
 **Required Secrets**:
 - `AWS_ACCESS_KEY_ID`: AWS access key for deployment
@@ -55,62 +47,119 @@ This directory contains the GitHub Actions workflows that power the CI/CD pipeli
 
 ### 2. Frontend Workflow ([frontend.yml](frontend.yml))
 
-**Purpose**: Build, test, and deploy the React frontend application
+**Purpose**: Build and test the React frontend application
 
 **Trigger Events**:
 - Push to `main` branch (changes in `frontend/` directory)
 - Pull requests to `main` branch
 - Manual workflow dispatch
-- Scheduled (if configured)
 
 **Jobs**:
 1. **Build and Test**
-   - Sets up Node.js environment (LTS version)
+   - Sets up Node.js 18 environment
    - Caches npm dependencies
    - Installs project dependencies
-   - Runs ESLint for code quality
+   - Runs ESLint for code quality (non-blocking)
    - Executes tests with React Testing Library
-   - Generates code coverage report
    - Builds production-ready React application
-   - Uploads build artifacts for deployment
    - Verifies the production build
-   - Uploads build artifacts for deployment
 
-2. **Deploy to S3/CloudFront** (if enabled)
-   - Configures AWS credentials
-   - Syncs build artifacts to S3 bucket
-   - Creates CloudFront invalidation
-   - Sends deployment notifications
-   - Verifies the deployment
+**Notes**:
+- The frontend is built and tested but not automatically deployed
+- Deployment to S3/CloudFront is a manual process (see main README)
 
-### 3. Terraform CI Workflow ([terraform-ci.yml](terraform-ci.yml))
+## 🔧 Configuration
 
-**Purpose**: Validate and plan Terraform infrastructure changes
+### Environment Variables
 
-**Trigger Events**:
-- Push to `main` branch (changes in `deployment/` directory)
-- Pull requests to `main` branch
-- Manual workflow dispatch
+#### Backend
+- `JWT_SECRET`: Secret key for JWT authentication (required for production)
+- `PORT`: Port to run the server on (default: 8080)
+- `ENVIRONMENT`: Deployment environment (e.g., `development`, `production`)
 
-**Jobs**:
-1. **Terraform Validation**
-   - Sets up Terraform
-   - Initializes backend and modules
-   - Validates the configuration
-   - Performs `terraform plan`
-   - Outputs plan summary
-   - Posts plan as a PR comment (for PRs)
-   - Fails if plan contains destructive changes
+#### Frontend
+- `REACT_APP_API_URL`: Base URL for the backend API (default: http://localhost:8080/api)
 
-2. **Security Scanning** (if enabled)
-   - Runs `tfsec` for security best practices
-   - Runs `checkov` for infrastructure security
-   - Fails on critical security issues
+## 🚀 Deployment Guide
 
-**Required Secrets**:
-- `AWS_ACCESS_KEY_ID`: AWS access key for Terraform
-- `AWS_SECRET_ACCESS_KEY`: AWS secret access key
-- `GITHUB_TOKEN`: GitHub token for PR comments (auto-provided)
+### Backend Deployment
+
+1. **Build and Push Image** (automated on push to main)
+   - The backend workflow builds and pushes a Docker image to GitHub Container Registry
+   - The image is tagged with the commit SHA and branch name
+
+2. **Update EC2 Instance**
+   ```bash
+   # SSH into the EC2 instance
+   ssh -i your-key.pem ubuntu@your-ec2-ip
+   
+   # Pull the latest image
+   docker pull ghcr.io/mesbahtanvir/thoughts-backend:latest
+   
+   # Restart the service
+   sudo systemctl restart thoughts-backend
+   ```
+
+### Frontend Deployment
+
+1. **Build the Application**
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   ```
+
+2. **Deploy to S3**
+   ```bash
+   # Sync build directory with S3 bucket
+   aws s3 sync build/ s3://your-frontend-bucket --delete
+   
+   # Invalidate CloudFront cache (if using CloudFront)
+   aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
+   ```
+
+## 🔒 Security Best Practices
+
+1. **Secrets Management**
+   - Store all sensitive data in GitHub Secrets
+   - Never hardcode credentials in workflow files
+   - Use environment-specific secrets when possible
+
+2. **Workflow Security**
+   - Enable branch protection for main branch
+   - Require pull request reviews
+   - Require status checks to pass before merging
+
+3. **Infrastructure Security**
+   - Use least-privilege IAM roles
+   - Enable encryption at rest and in transit
+   - Regularly rotate credentials and secrets
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+1. **Workflow Failing**
+   - Check the "Actions" tab for detailed logs
+   - Verify all required secrets are set
+   - Ensure AWS permissions are correctly configured
+
+2. **Deployment Issues**
+   - Check EC2 instance logs: `journalctl -u thoughts-backend -f`
+   - Verify network connectivity (security groups, VPC settings)
+   - Confirm the container can access required resources
+
+3. **Terraform Issues**
+   - Run `terraform validate` locally
+   - Check for state locking issues
+   - Verify AWS credentials and permissions
+
+## 📚 Additional Resources
+
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+- [Terraform Documentation](https://www.terraform.io/docs/index.html)
+- [AWS CLI Documentation](https://aws.amazon.com/cli/)
 
 ## 🔧 Configuration
 

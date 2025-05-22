@@ -40,5 +40,26 @@ A Go backend for the Thoughts application that handles user authentication and t
 
 ## Environment Variables
 
-- `JWT_SECRET` - Secret key for JWT token generation
+### Required
+- `JWT_SECRET` - Secret key used for signing and verifying JWT tokens
+  - **Security Note**: Must be a strong, random string in production
+  - **Example**: `openssl rand -base64 32`
+  - **Important**: Never commit this value to version control
+
+### Optional
 - `PORT` - Port to run the server on (default: 8080)
+- `ENVIRONMENT` - Application environment (e.g., development, production)
+- `DATABASE_URL` - Database connection string (if not using SQLite)
+
+## Security Considerations
+
+### JWT_SECRET
+- The `JWT_SECRET` is used to sign and verify all authentication tokens
+- In production, use a strong, randomly generated string
+- Rotate the secret periodically and invalidate existing tokens when rotated
+- Never log or expose the secret in client-side code
+
+### Token Security
+- Tokens are set as HTTP-only cookies for web clients
+- Tokens have a reasonable expiration time
+- Always use HTTPS in production to prevent token interception

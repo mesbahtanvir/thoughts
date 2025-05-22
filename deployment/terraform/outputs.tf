@@ -14,23 +14,18 @@ output "frontend_url" {
   value       = "https://${module.frontend.cloudfront_domain_name}"
 }
 
+output "frontend_configured_api_url" {
+  description = "API URL that the frontend is configured to use"
+  value       = module.frontend.api_url
+}
+
 # Backend outputs
 output "backend_public_ip" {
   description = "Public IP address of the backend EC2 instance"
-  value       = module.backend.public_ip
-}
-
-output "backend_public_dns" {
-  description = "Public DNS of the backend EC2 instance"
-  value       = module.backend.public_dns
-}
-
-output "backend_security_group_id" {
-  description = "ID of the security group for the backend"
-  value       = module.backend.security_group_id
+  value       = module.backend.instance_public_ip
 }
 
 output "backend_api_url" {
   description = "URL of the backend API"
-  value       = "http://${module.backend.public_dns}/api"
+  value       = "http://${module.backend.instance_public_ip}"
 }
