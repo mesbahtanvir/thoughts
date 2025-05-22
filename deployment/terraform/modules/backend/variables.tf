@@ -26,8 +26,18 @@ variable "key_name" {
 
 variable "github_token" {
   type        = string
-  description = "GitHub token for accessing container registry"
+  description = "GitHub token for accessing private container registry"
   sensitive   = true
+}
+
+variable "allowed_ips" {
+  description = "List of allowed IP addresses in CIDR notation (e.g., [\"123.45.67.89/32\"])"
+  type        = list(string)
+  default     = []
+  validation {
+    condition     = alltrue([for ip in var.allowed_ips : can(regex("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$", ip))])
+    error_message = "Each IP must be a valid IPv4 CIDR block (e.g., 192.168.1.1/32)."
+  }
 }
 
 variable "jwt_secret" {

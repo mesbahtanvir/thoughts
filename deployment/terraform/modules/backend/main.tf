@@ -30,6 +30,17 @@ locals {
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+# Create a CloudWatch log group for the instance
+resource "aws_cloudwatch_log_group" "instance_logs" {
+  name              = "/aws/ec2/${var.app_name}-${var.environment}-instance"
+  retention_in_days = 30
+  
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-instance-logs"
+    Environment = var.environment
+  }
+}
+
 resource "aws_iam_role_policy" "ecr_pull_policy" {
   name = "${var.app_name}-${var.environment}-ecr-pull-policy"
   role = aws_iam_role.ec2_role.id
@@ -56,11 +67,29 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:*:*:log-group:/aws/ec2/${var.app_name}-${var.environment}-*"
+        Resource = "${aws_cloudwatch_log_group.instance_logs.arn}:*"
+      }
+    ]
+  })
+}
+
+# Allow the instance to create log groups in the specific path
+resource "aws_iam_role_policy" "log_group_policy" {
+  name = "${var.app_name}-${var.environment}-log-group-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup"
+        ]
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/ec2/${var.app_name}-${var.environment}-*"
       }
     ]
   })
@@ -78,42 +107,49 @@ resource "aws_security_group" "ec2_sg" {
   description = "Security group for backend EC2 instance"
   vpc_id      = var.vpc_id
 
-  # SSH access - restrict to specific IP in production
+  # SSH access - restrict to specific IP
   ingress {
     description = "SSH access"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # TODO: Restrict to your IP in production
+    cidr_blocks = var.allowed_ips
   }
 
-  # HTTP access
+  # HTTP access - restricted to Load Balancer or specific IPs
   ingress {
     description = "HTTP access"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_ips
+  }
+
+  # HTTPS access - restricted to Load Balancer or specific IPs
+  ingress {
+    description = "HTTPS access"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_ips
+  }
+
+  # Outbound traffic - restrict to necessary ports
+  egress {
+    description = "Allow outbound HTTP traffic"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTPS access
-  ingress {
-    description = "HTTPS access"
+  egress {
+    description = "Allow outbound HTTPS traffic"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  # Outbound traffic
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
 
   tags = {
     Name = "${var.app_name}-${var.environment}-backend-sg"

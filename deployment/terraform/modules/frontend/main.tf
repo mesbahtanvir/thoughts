@@ -2,6 +2,18 @@
 # S3 Bucket Configuration
 ###########################
 
+# Create KMS key for S3 encryption
+resource "aws_kms_key" "s3_key" {
+  description             = "KMS key for ${var.app_name}-${var.environment} S3 encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+  
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-s3-key"
+    Environment = var.environment
+  }
+}
+
 # Create S3 bucket for static website hosting
 resource "aws_s3_bucket" "frontend" {
   bucket = "${var.app_name}-${var.environment}-frontend"
@@ -20,18 +32,19 @@ resource "aws_s3_bucket_versioning" "frontend" {
   }
 }
 
-# Enable default server-side encryption
+# Enable KMS encryption for the frontend bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = aws_kms_key.s3_key.arn
+      sse_algorithm     = "aws:kms"
     }
   }
 }
 
-# Create a logging bucket
+# Create a logging bucket with encryption and versioning
 resource "aws_s3_bucket" "logs" {
   bucket = "${var.app_name}-${var.environment}-frontend-logs"
   
@@ -39,6 +52,33 @@ resource "aws_s3_bucket" "logs" {
     Name        = "${var.app_name}-${var.environment}-frontend-logs"
     Environment = var.environment
   }
+}
+
+# Enable versioning for the logs bucket
+resource "aws_s3_bucket_versioning" "logs_versioning" {
+  bucket = aws_s3_bucket.logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Enable server-side encryption for the logs bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "logs_encryption" {
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.s3_key.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+# Enable access logging for the logs bucket (self-logging)
+resource "aws_s3_bucket_logging" "logs_self_logging" {
+  bucket        = aws_s3_bucket.logs.id
+  target_bucket = aws_s3_bucket.logs.id
+  target_prefix = "self-logs/"
 }
 
 # Enable logging for the frontend bucket
