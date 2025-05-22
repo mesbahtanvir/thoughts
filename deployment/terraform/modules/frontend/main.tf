@@ -44,6 +44,18 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   }
 }
 
+# Create a KMS key for the logging bucket
+resource "aws_kms_key" "logs_key" {
+  description             = "KMS key for ${var.app_name}-${var.environment} S3 logs encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+  
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-logs-key"
+    Environment = var.environment
+  }
+}
+
 # Create a logging bucket with encryption and versioning
 resource "aws_s3_bucket" "logs" {
   bucket = "${var.app_name}-${var.environment}-frontend-logs"
@@ -63,16 +75,16 @@ resource "aws_s3_bucket_ownership_controls" "logs_ownership" {
   }
 }
 
-# Enable versioning for the logs bucket
-resource "aws_s3_bucket_versioning" "logs_versioning" {
+# Enable versioning for the logging bucket
+resource "aws_s3_bucket_versioning" "logs" {
   bucket = aws_s3_bucket.logs.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-# Enable server-side encryption for the logs bucket
-resource "aws_s3_bucket_server_side_encryption_configuration" "logs_encryption" {
+# Enable KMS encryption for the logging bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
   bucket = aws_s3_bucket.logs.id
 
   rule {

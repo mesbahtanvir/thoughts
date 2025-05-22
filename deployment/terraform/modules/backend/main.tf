@@ -54,6 +54,7 @@ resource "aws_cloudwatch_log_group" "instance_logs" {
   }
 }
 
+# IAM policy for ECR access
 resource "aws_iam_role_policy" "ecr_pull_policy" {
   name = "${var.app_name}-${var.environment}-ecr-pull-policy"
   role = aws_iam_role.ec2_role.id
@@ -66,7 +67,7 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
         Action = [
           "ecr:GetAuthorizationToken"
         ]
-        Resource = "*"
+        Resource = "*"  # This is required by ECR
       },
       {
         Effect = "Allow"
@@ -76,7 +77,24 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
           "ecr:BatchGetImage"
         ]
         Resource = [local.ecr_repository_arn]
-      },
+        Condition = {
+          StringEquals = {
+            "aws:RequestedRegion" = [data.aws_region.current.name]
+          }
+        }
+      }
+    ]
+  })
+}
+
+# IAM policy for CloudWatch Logs
+resource "aws_iam_role_policy" "cloudwatch_logs_policy" {
+  name = "${var.app_name}-${var.environment}-cloudwatch-logs-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
       {
         Effect = "Allow"
         Action = [
@@ -169,6 +187,18 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
+# Create a KMS key for EBS encryption
+resource "aws_kms_key" "ebs_key" {
+  description             = "KMS key for ${var.app_name}-${var.environment} EBS encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+  
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-ebs-key"
+    Environment = var.environment
+  }
+}
+
 # Create EC2 instance
 resource "aws_instance" "backend" {
   ami                    = data.aws_ami.ubuntu.id
@@ -192,6 +222,7 @@ resource "aws_instance" "backend" {
     volume_size = 30
     volume_type = "gp3"
     encrypted   = true
+    kms_key_id  = aws_kms_key.ebs_key.arn
   }
 
   metadata_options {
