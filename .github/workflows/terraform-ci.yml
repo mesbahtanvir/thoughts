@@ -5,10 +5,12 @@ on:
     branches: [ main ]
     paths:
       - 'deployment/terraform/**'
+      - '.github/workflows/terraform-ci.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'deployment/terraform/**'
+      - '.github/workflows/terraform-ci.yml'
   workflow_dispatch:
 
 jobs:
