@@ -96,10 +96,11 @@ resource "aws_instance" "backend" {
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   user_data = templatefile("${path.module}/user_data.sh", {
-    app_name     = var.app_name
-    environment  = var.environment
-    github_token = var.github_token
-    jwt_secret   = var.jwt_secret
+    app_name        = var.app_name
+    environment     = var.environment
+    github_token    = var.github_token
+    jwt_secret      = var.jwt_secret
+    GITHUB_USERNAME = var.github_username
   })
 
   tags = {
