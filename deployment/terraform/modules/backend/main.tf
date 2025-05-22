@@ -35,10 +35,48 @@ resource "aws_kms_key" "cloudwatch_logs" {
   description             = "KMS key for CloudWatch Logs encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.cloudwatch_logs_kms_policy.json
 
   tags = {
     Name        = "${var.app_name}-${var.environment}-cloudwatch-logs-key"
     Environment = var.environment
+  }
+}
+
+data "aws_iam_policy_document" "cloudwatch_logs_kms_policy" {
+  # Allow root account full access
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  # Allow CloudWatch Logs to use the key
+  statement {
+    sid    = "Allow CloudWatch Logs to use the key"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt*",
+      "kms:Decrypt*",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:Describe*"
+    ]
+    resources = ["*"]
+    condition {
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/ec2/${var.app_name}-${var.environment}-instance*"]
+    }
   }
 }
 
