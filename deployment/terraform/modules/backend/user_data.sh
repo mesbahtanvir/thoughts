@@ -81,7 +81,7 @@ fi
 # Login to GitHub Container Registry
 echo "Logging in to GitHub Container Registry..."
 if [ -n "\$GITHUB_TOKEN" ]; then
-    echo "\$GITHUB_TOKEN" | docker login ghcr.io -u \${GITHUB_USERNAME:-mesbahtanvir} --password-stdin
+    echo "\$GITHUB_TOKEN" | docker login ghcr.io -u \${GITHUB_USERNAME} --password-stdin
 else
     echo "WARNING: GITHUB_TOKEN not set, skipping container registry login"
 fi
