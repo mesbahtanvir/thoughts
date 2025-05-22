@@ -7,7 +7,7 @@ resource "aws_kms_key" "s3_key" {
   description             = "KMS key for ${var.app_name}-${var.environment} S3 encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-s3-key"
     Environment = var.environment
@@ -49,7 +49,7 @@ resource "aws_kms_key" "logs_key" {
   description             = "KMS key for ${var.app_name}-${var.environment} S3 logs encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-logs-key"
     Environment = var.environment
@@ -59,7 +59,7 @@ resource "aws_kms_key" "logs_key" {
 # Create a logging bucket with encryption and versioning
 resource "aws_s3_bucket" "logs" {
   bucket = "${var.app_name}-${var.environment}-frontend-logs"
-  
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-frontend-logs"
     Environment = var.environment
@@ -69,7 +69,7 @@ resource "aws_s3_bucket" "logs" {
 # Enable ACLs for the logs bucket
 resource "aws_s3_bucket_ownership_controls" "logs_ownership" {
   bucket = aws_s3_bucket.logs.id
-  
+
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
@@ -105,7 +105,7 @@ resource "aws_s3_bucket_logging" "logs_self_logging" {
 # Set up ACL for the logs bucket to allow CloudFront to write logs
 resource "aws_s3_bucket_acl" "logs_acl" {
   depends_on = [aws_s3_bucket_ownership_controls.logs_ownership]
-  
+
   bucket = aws_s3_bucket.logs.id
   acl    = "log-delivery-write"
 }

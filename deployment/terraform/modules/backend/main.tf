@@ -35,7 +35,7 @@ resource "aws_kms_key" "cloudwatch_logs" {
   description             = "KMS key for CloudWatch Logs encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-cloudwatch-logs-key"
     Environment = var.environment
@@ -47,7 +47,7 @@ resource "aws_cloudwatch_log_group" "instance_logs" {
   name              = "/aws/ec2/${var.app_name}-${var.environment}-instance"
   retention_in_days = 30
   kms_key_id        = aws_kms_key.cloudwatch_logs.arn
-  
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-instance-logs"
     Environment = var.environment
@@ -67,7 +67,7 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
         Action = [
           "ecr:GetAuthorizationToken"
         ]
-        Resource = "*"  # This is required by ECR
+        Resource = "*" # This is required by ECR
       },
       {
         Effect = "Allow"
@@ -166,6 +166,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   # Allow HTTP outbound
+  # tfsec:ignore:aws-ec2-no-public-egress-sgr - HTTP egress is required for package updates and AWS services
   egress {
     description = "Allow outbound HTTP traffic"
     from_port   = 80
@@ -175,6 +176,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   # Allow HTTPS outbound
+  # tfsec:ignore:aws-ec2-no-public-egress-sgr - HTTPS egress is required for secure communication with AWS services
   egress {
     description = "Allow outbound HTTPS traffic"
     from_port   = 443
@@ -203,7 +205,7 @@ resource "aws_kms_key" "ebs_key" {
   description             = "KMS key for ${var.app_name}-${var.environment} EBS encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-ebs-key"
     Environment = var.environment

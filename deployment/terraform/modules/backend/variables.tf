@@ -51,7 +51,7 @@ variable "jwt_secret" {
 variable "github_username" {
   type        = string
   description = "GitHub username for container registry authentication"
-  default     = "mesbahtanvir"  # Default to your username, can be overridden
+  default     = "mesbahtanvir" # Default to your username, can be overridden
 }
 
 # Data source for the latest Ubuntu AMI

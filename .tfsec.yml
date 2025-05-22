@@ -4,23 +4,3 @@ ignores:
     description: CloudWatch Logs requires wildcard for log stream creation
     paths:
       - deployment/terraform/modules/backend/main.tf
-
-  # HTTP/HTTPS egress rules
-  - code: aws-ec2-no-public-egress-sgr
-    description: HTTP/HTTPS egress is required for package updates and AWS services
-    ranges:
-      - start_line: 170
-        end_line: 176
-      - start_line: 183
-        end_line: 184
-    paths:
-      - deployment/terraform/modules/backend/main.tf
-
-  # NTP egress rule
-  - code: aws-ec2-no-public-egress-sgr
-    description: NTP requires public internet access
-    ranges:
-      - start_line: 192
-        end_line: 198
-    paths:
-      - deployment/terraform/modules/backend/main.tf

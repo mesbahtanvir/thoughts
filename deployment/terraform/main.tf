@@ -24,7 +24,7 @@ module "frontend" {
   app_name    = var.app_name
   environment = var.environment
   aws_region  = var.aws_region
-  
+
   # Note: The API URL is now set during the frontend build process
   # using environment variables or a build script
 }

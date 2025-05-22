@@ -8,7 +8,7 @@ output "website_endpoint" {
 output "cloudfront_url" {
   description = "CloudFront distribution URL"
   value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
-  
+
   # This output depends on the CloudFront distribution being created
   depends_on = [aws_cloudfront_distribution.frontend]
 }

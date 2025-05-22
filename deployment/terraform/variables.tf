@@ -45,7 +45,7 @@ variable "allowed_ips" {
   type        = list(string)
   description = "List of allowed IP addresses in CIDR notation (e.g., [\"123.45.67.89/32\"])"
   default     = []
-  
+
   validation {
     # Simple validation that checks for a basic IP/CIDR pattern
     # This is less strict but avoids complex regex escaping issues
