@@ -25,8 +25,8 @@ module "frontend" {
   environment = var.environment
   aws_region  = var.aws_region
   
-  # Pass the backend API URL to the frontend
-  api_url     = "http://${module.backend.public_dns}/api"
+  # Note: The API URL is now set during the frontend build process
+  # using environment variables or a build script
 }
 
 # Backend module

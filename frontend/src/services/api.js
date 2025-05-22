@@ -1,6 +1,10 @@
 // Get API URL from environment variable or use localhost as fallback
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api'; // Include /api in the base URL
+
+// Debug log all environment variables
+console.log('Environment variables:', process.env);
 console.log('Using API URL:', API_BASE_URL);
+console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
 
 // Helper function to handle API requests
 const apiRequest = async (endpoint, options = {}) => {
