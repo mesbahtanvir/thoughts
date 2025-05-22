@@ -41,8 +41,11 @@ jobs:
     # Validate the Terraform configuration
     - name: Terraform Validate
       id: validate
-      run: terraform validate
+      run: |
+        terraform validate -var="github_token=${{ secrets.GITHUB_TOKEN }}"
       working-directory: ./deployment/terraform
+      env:
+        TF_VAR_github_token: ${{ secrets.GITHUB_TOKEN }}
       
     # Run tfsec to check for security issues
     - name: tfsec
@@ -63,8 +66,12 @@ jobs:
     - name: Terraform Plan
       id: plan
       if: github.event_name == 'pull_request'
-      run: terraform plan -no-color -input=false
+      run: |
+        terraform plan -no-color -input=false -var="github_token=${{ secrets.GITHUB_TOKEN }}" -var="jwt_secret=dummy-secret-for-validation"
       working-directory: ./deployment/terraform
+      env:
+        TF_VAR_github_token: ${{ secrets.GITHUB_TOKEN }}
+        TF_VAR_jwt_secret: dummy-secret-for-validation
       continue-on-error: true
       
     # Add report comment to PR

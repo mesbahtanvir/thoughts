@@ -71,9 +71,20 @@ cat > /home/ubuntu/app/start.sh << 'EOL'
 #!/bin/bash
 set -e
 
+# Source environment variables if they exist
+if [ -f /home/ubuntu/app/.env ]; then
+    set -a
+    source /home/ubuntu/app/.env
+    set +a
+fi
+
 # Login to GitHub Container Registry
 echo "Logging in to GitHub Container Registry..."
-echo "${GITHUB_TOKEN}" | docker login ghcr.io -u ${GITHUB_USERNAME} --password-stdin
+if [ -n "$GITHUB_TOKEN" ]; then
+    echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${GITHUB_USERNAME:-mesbahtanvir} --password-stdin
+else
+    echo "WARNING: GITHUB_TOKEN not set, skipping container registry login"
+fi
 
 # Pull the latest image
 echo "Pulling the latest image..."
