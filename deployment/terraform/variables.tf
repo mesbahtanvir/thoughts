@@ -32,5 +32,5 @@ variable "jwt_secret" {
   type        = string
   description = "JWT secret key for authentication"
   sensitive   = true
-  default     = "default-insecure-secret-change-me"  # In production, always set this explicitly
+  default     = "default-insecure-secret-change-me" # In production, always set this explicitly
 }
