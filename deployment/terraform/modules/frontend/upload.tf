@@ -2,6 +2,9 @@
 locals {
   # Path to the frontend build directory
   build_dir = "${path.root}/../../frontend/build"
+  
+  # Path to the templates directory
+  templates_dir = "${path.module}/templates"
 
   # Get all files from the build directory recursively
   files = fileset(local.build_dir, "**")
@@ -22,7 +25,13 @@ locals {
     "ttf"   = "font/ttf"
     "woff"  = "font/woff"
     "woff2" = "font/woff2"
+    "env"   = "text/plain"
   }
+  
+  # Generate .env file content
+  env_content = templatefile("${local.templates_dir}/env.tpl", {
+    api_url = var.api_url
+  })
 }
 
 # Upload each file to S3 with the appropriate content type
@@ -42,4 +51,13 @@ resource "aws_s3_object" "frontend_files" {
 
   # Calculate ETag to detect changes in source files
   etag = filemd5("${local.build_dir}/${each.value}")
+}
+
+# Upload the .env file with the API URL
+resource "aws_s3_object" "env_file" {
+  bucket  = aws_s3_bucket.frontend.id
+  key     = ".env"
+  content = local.env_content
+  content_type = "text/plain"
+  etag   = md5(local.env_content)
 }

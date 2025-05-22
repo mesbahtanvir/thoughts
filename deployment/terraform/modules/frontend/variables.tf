@@ -13,6 +13,11 @@ variable "aws_region" {
   description = "AWS region for deploying resources"
 }
 
+variable "api_url" {
+  type        = string
+  description = "URL of the backend API"
+}
+
 # Uncomment if you want to use a custom domain with SSL
 # variable "domain_name" {
 #   type        = string

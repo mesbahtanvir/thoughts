@@ -24,6 +24,9 @@ module "frontend" {
   app_name    = var.app_name
   environment = var.environment
   aws_region  = var.aws_region
+  
+  # Pass the backend API URL to the frontend
+  api_url     = "http://${module.backend.public_dns}/api"
 }
 
 # Backend module
@@ -34,7 +37,7 @@ module "backend" {
   app_name     = var.app_name
   environment  = var.environment
   vpc_id       = data.aws_vpc.default.id
-  key_name     = var.ec2_key_name
+  ec2_key_name = var.ec2_key_name
   github_token = var.github_token
   jwt_secret   = var.jwt_secret
   allowed_ips  = var.allowed_ips

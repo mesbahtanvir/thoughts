@@ -29,3 +29,8 @@ output "backend_security_group_id" {
   description = "ID of the security group for the backend"
   value       = module.backend.security_group_id
 }
+
+output "backend_api_url" {
+  description = "URL of the backend API"
+  value       = "http://${module.backend.public_dns}/api"
+}

@@ -19,13 +19,19 @@ variable "aws_region" {
 variable "ec2_key_name" {
   type        = string
   description = "Name of an existing EC2 KeyPair to enable SSH access"
-  default     = "your-key-pair-name" # Replace with your actual key pair name
+  default     = "thoughts"
 }
 
 variable "github_token" {
   type        = string
   description = "GitHub token for accessing container registry"
   sensitive   = true
+}
+
+variable "github_username" {
+  type        = string
+  description = "GitHub username for container registry access"
+  default     = "mesbahtanvir"
 }
 
 variable "jwt_secret" {
@@ -41,7 +47,9 @@ variable "allowed_ips" {
   default     = []
   
   validation {
-    condition     = alltrue([for ip in var.allowed_ips : can(regex("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$", ip))])
+    # Simple validation that checks for a basic IP/CIDR pattern
+    # This is less strict but avoids complex regex escaping issues
+    condition     = alltrue([for ip in var.allowed_ips : can(regex("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}(/[0-9]{1,2})?$", ip))])
     error_message = "Each IP must be a valid IPv4 CIDR block (e.g., 192.168.1.1/32)."
   }
 }

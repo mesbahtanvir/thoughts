@@ -54,6 +54,15 @@ resource "aws_s3_bucket" "logs" {
   }
 }
 
+# Enable ACLs for the logs bucket
+resource "aws_s3_bucket_ownership_controls" "logs_ownership" {
+  bucket = aws_s3_bucket.logs.id
+  
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
 # Enable versioning for the logs bucket
 resource "aws_s3_bucket_versioning" "logs_versioning" {
   bucket = aws_s3_bucket.logs.id
@@ -79,6 +88,14 @@ resource "aws_s3_bucket_logging" "logs_self_logging" {
   bucket        = aws_s3_bucket.logs.id
   target_bucket = aws_s3_bucket.logs.id
   target_prefix = "self-logs/"
+}
+
+# Set up ACL for the logs bucket to allow CloudFront to write logs
+resource "aws_s3_bucket_acl" "logs_acl" {
+  depends_on = [aws_s3_bucket_ownership_controls.logs_ownership]
+  
+  bucket = aws_s3_bucket.logs.id
+  acl    = "log-delivery-write"
 }
 
 # Enable logging for the frontend bucket
