@@ -30,6 +30,27 @@ locals {
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+# AWS Managed Prefix Lists
+data "aws_ec2_managed_prefix_list" "s3" {
+  name = "com.amazonaws.${data.aws_region.current.name}.s3"
+}
+
+data "aws_ec2_managed_prefix_list" "ecr" {
+  name = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
+}
+
+data "aws_ec2_managed_prefix_list" "ec2messages" {
+  name = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
+}
+
+data "aws_ec2_managed_prefix_list" "ssm" {
+  name = "com.amazonaws.${data.aws_region.current.name}.ssm"
+}
+
+data "aws_ec2_managed_prefix_list" "ssmmessages" {
+  name = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
+}
+
 # Create a KMS key for CloudWatch Logs
 resource "aws_kms_key" "cloudwatch_logs" {
   description             = "KMS key for CloudWatch Logs encryption"
@@ -98,10 +119,19 @@ resource "aws_iam_role_policy" "cloudwatch_logs_policy" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:CreateLogStream"
         ]
         Resource = "${aws_cloudwatch_log_group.instance_logs.arn}:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:PutLogEvents"
+        ]
+        Resource = [
+          "${aws_cloudwatch_log_group.instance_logs.arn}:*",
+          "${aws_cloudwatch_log_group.instance_logs.arn}:*:*"
+        ]
       }
     ]
   })
@@ -165,20 +195,42 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = var.allowed_ips
   }
 
-  # Outbound traffic - restrict to necessary ports
+  # Allow HTTP outbound to specific AWS service endpoints
   egress {
-    description = "Allow outbound HTTP traffic"
+    description = "Allow outbound HTTP traffic to AWS service endpoints"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    prefix_list_ids = [
+      data.aws_ec2_managed_prefix_list.s3.id,
+      data.aws_ec2_managed_prefix_list.ecr.id,
+      data.aws_ec2_managed_prefix_list.ec2messages.id,
+      data.aws_ec2_managed_prefix_list.ssm.id,
+      data.aws_ec2_managed_prefix_list.ssmmessages.id
+    ]
   }
 
+  # Allow HTTPS outbound to specific AWS service endpoints
   egress {
-    description = "Allow outbound HTTPS traffic"
+    description = "Allow outbound HTTPS traffic to AWS service endpoints"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
+    prefix_list_ids = [
+      data.aws_ec2_managed_prefix_list.s3.id,
+      data.aws_ec2_managed_prefix_list.ecr.id,
+      data.aws_ec2_managed_prefix_list.ec2messages.id,
+      data.aws_ec2_managed_prefix_list.ssm.id,
+      data.aws_ec2_managed_prefix_list.ssmmessages.id
+    ]
+  }
+
+  # Allow NTP outbound
+  egress {
+    description = "Allow outbound NTP traffic"
+    from_port   = 123
+    to_port     = 123
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
