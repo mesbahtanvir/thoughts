@@ -43,10 +43,13 @@ jobs:
     # Validate the Terraform configuration with mock values
     - name: Terraform Validate
       id: validate
-      run: |
-        terraform validate -backend=false
-        terraform validate -var="github_token=dummy_token" -var="jwt_secret=dummy_secret" -var="app_name=test" -var="environment=test"
+      run: terraform validate
       working-directory: ./deployment/terraform
+      env:
+        TF_VAR_github_token: dummy_token
+        TF_VAR_jwt_secret: dummy_secret
+        TF_VAR_app_name: test
+        TF_VAR_environment: test
       
     # Run tfsec to check for security issues
     - name: tfsec
