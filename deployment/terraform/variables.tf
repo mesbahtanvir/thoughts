@@ -21,3 +21,9 @@ variable "ec2_key_name" {
   description = "Name of an existing EC2 KeyPair to enable SSH access"
   default     = "your-key-pair-name"  # Replace with your actual key pair name
 }
+
+variable "github_token" {
+  type        = string
+  description = "GitHub token for accessing container registry"
+  sensitive   = true
+}

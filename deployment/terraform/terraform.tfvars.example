@@ -1,0 +1,11 @@
+# Application settings
+app_name    = "thoughts"
+environment = "prod"
+
+# AWS settings
+aws_region  = "us-east-1"
+ec2_key_name = "your-key-pair-name"  # Replace with your actual key pair name
+
+# GitHub settings
+github_token = "your-github-token"  # Replace with your GitHub token with read:packages scope
+

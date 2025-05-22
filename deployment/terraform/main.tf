@@ -30,8 +30,10 @@ module "frontend" {
 module "backend" {
   source = "./modules/backend"
 
-  app_name    = var.app_name
-  environment = var.environment
-  vpc_id      = data.aws_vpc.default.id
-  key_name    = var.ec2_key_name
+
+  app_name     = var.app_name
+  environment  = var.environment
+  vpc_id       = data.aws_vpc.default.id
+  key_name     = var.ec2_key_name
+  github_token = var.github_token
 }

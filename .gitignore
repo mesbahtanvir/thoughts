@@ -49,6 +49,13 @@ yarn-error.log*
 .terraformrc
 terraform.rc
 crash.log
+
+# SSH keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
 override.tf
 override.tf.json
 *_override.tf

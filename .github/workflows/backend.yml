@@ -110,5 +110,16 @@ jobs:
         echo "Image pushed to: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
         echo "Tags: ${{ steps.meta.outputs.tags }}"
 
+    - name: Scan image for vulnerabilities
+      if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      uses: docker/scout-action@v1
+      with:
+        command: quickview
+        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        token: ${{ secrets.GITHUB_TOKEN }}
+        severity-level: high # Only show high and critical vulnerabilities
+        exit-code: 'true' # Fail the build if vulnerabilities are found
+        ignore-base: 'true' # Don't show base image vulnerabilities (handled by base image maintainers)
+
     # Deployment status updates removed as they require additional setup
     # and are not critical for the build process

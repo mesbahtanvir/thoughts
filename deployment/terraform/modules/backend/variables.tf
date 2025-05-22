@@ -24,6 +24,12 @@ variable "key_name" {
   description = "Name of an existing EC2 KeyPair to enable SSH access"
 }
 
+variable "github_token" {
+  type        = string
+  description = "GitHub token for accessing container registry"
+  sensitive   = true
+}
+
 # Data source for the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
   most_recent = true
