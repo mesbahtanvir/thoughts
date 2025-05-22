@@ -30,27 +30,6 @@ locals {
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
-# AWS Managed Prefix Lists
-data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${data.aws_region.current.name}.s3"
-}
-
-data "aws_ec2_managed_prefix_list" "ecr" {
-  name = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
-}
-
-data "aws_ec2_managed_prefix_list" "ec2messages" {
-  name = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
-}
-
-data "aws_ec2_managed_prefix_list" "ssm" {
-  name = "com.amazonaws.${data.aws_region.current.name}.ssm"
-}
-
-data "aws_ec2_managed_prefix_list" "ssmmessages" {
-  name = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
-}
-
 # Create a KMS key for CloudWatch Logs
 resource "aws_kms_key" "cloudwatch_logs" {
   description             = "KMS key for CloudWatch Logs encryption"
@@ -108,7 +87,7 @@ resource "aws_iam_role_policy" "ecr_pull_policy" {
   })
 }
 
-# IAM policy for CloudWatch Logs
+# tfsec:ignore:aws-iam-no-policy-wildcards - CloudWatch Logs requires wildcard for log stream names
 resource "aws_iam_role_policy" "cloudwatch_logs_policy" {
   name = "${var.app_name}-${var.environment}-cloudwatch-logs-policy"
   role = aws_iam_role.ec2_role.id
@@ -119,19 +98,10 @@ resource "aws_iam_role_policy" "cloudwatch_logs_policy" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogStream"
-        ]
-        Resource = "${aws_cloudwatch_log_group.instance_logs.arn}:*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
+          "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = [
-          "${aws_cloudwatch_log_group.instance_logs.arn}:*",
-          "${aws_cloudwatch_log_group.instance_logs.arn}:*:*"
-        ]
+        Resource = "${aws_cloudwatch_log_group.instance_logs.arn}:*"
       }
     ]
   })
@@ -226,6 +196,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   # Allow NTP outbound
+  # tfsec:ignore:aws-ec2-no-public-egress-sgr - NTP requires public internet access
   egress {
     description = "Allow outbound NTP traffic"
     from_port   = 123

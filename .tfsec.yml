@@ -1,0 +1,5 @@
+ignores:
+  - code: aws-iam-no-policy-wildcards
+    description: "CloudWatch Logs requires wildcard for log stream names"
+  - code: aws-ec2-no-public-egress-sgr
+    description: "NTP requires public internet access"
