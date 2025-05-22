@@ -1,5 +1,13 @@
 ignores:
   - code: aws-iam-no-policy-wildcards
-    description: "CloudWatch Logs requires wildcard for log stream names"
+    description: CloudWatch Logs requires wildcard for log stream creation
+    paths:
+      - deployment/terraform/modules/backend/main.tf
   - code: aws-ec2-no-public-egress-sgr
-    description: "NTP requires public internet access"
+    description: NTP requires public internet access
+    paths:
+      - deployment/terraform/modules/backend/main.tf
+  - code: aws-ec2-no-public-egress-sgr
+    description: HTTP/HTTPS egress is required for package updates and AWS services
+    paths:
+      - deployment/terraform/modules/backend/main.tf
