@@ -36,4 +36,5 @@ module "backend" {
   vpc_id       = data.aws_vpc.default.id
   key_name     = var.ec2_key_name
   github_token = var.github_token
+  jwt_secret   = var.jwt_secret
 }

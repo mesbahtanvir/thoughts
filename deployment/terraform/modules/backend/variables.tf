@@ -30,6 +30,12 @@ variable "github_token" {
   sensitive   = true
 }
 
+variable "jwt_secret" {
+  type        = string
+  description = "JWT secret key for authentication"
+  sensitive   = true
+}
+
 # Data source for the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
   most_recent = true

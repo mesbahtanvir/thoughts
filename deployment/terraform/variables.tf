@@ -27,3 +27,10 @@ variable "github_token" {
   description = "GitHub token for accessing container registry"
   sensitive   = true
 }
+
+variable "jwt_secret" {
+  type        = string
+  description = "JWT secret key for authentication"
+  sensitive   = true
+  default     = "default-insecure-secret-change-me"  # In production, always set this explicitly
+}

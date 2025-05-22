@@ -99,6 +99,7 @@ resource "aws_instance" "backend" {
     app_name     = var.app_name
     environment  = var.environment
     github_token = var.github_token
+    jwt_secret   = var.jwt_secret
   })
 
   tags = {

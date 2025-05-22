@@ -34,7 +34,7 @@ mkdir -p /home/ubuntu/app
 chown -R ubuntu:ubuntu /home/ubuntu/app
 
 # Create Docker Compose file
-cat > /home/ubuntu/app/docker-compose.yml << 'EOL'
+cat > /home/ubuntu/app/docker-compose.yml << EOL
 version: '3.8'
 
 services:
@@ -45,8 +45,8 @@ services:
     ports:
       - "8000:8080"
     environment:
-      - JWT_SECRET=${JWT_SECRET}
-      - ENVIRONMENT=${ENVIRONMENT}
+      - JWT_SECRET=${jwt_secret}
+      - ENVIRONMENT=${environment}
       - PORT=8080
     volumes:
       - app_data:/app/data
