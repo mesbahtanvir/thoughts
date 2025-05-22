@@ -3,23 +3,55 @@
 
 A full-stack web application for sharing and managing thoughts, built with Go (backend) and React (frontend), deployed on AWS infrastructure.
 
+## 🏗️ Project Structure
+
+```
+.
+├── backend/                  # Go backend application
+│   ├── cmd/                  # Application entry points
+│   │   └── backend/          # Main application entry point
+│   ├── config/              # Configuration files
+│   └── internal/            # Core application code
+│       ├── api/             # HTTP handlers and routes
+│       ├── auth/            # Authentication logic
+│       ├── client/          # API client code
+│       ├── database/        # Database models and migrations
+│       └── models/          # Data models
+│
+├── deployment/             # Infrastructure as Code
+│   └── terraform/           # Terraform configurations
+│       └── modules/         # Reusable infrastructure modules
+│           ├── backend/     # Backend infrastructure
+│           └── frontend/    # Frontend infrastructure
+│
+├── frontend/               # React frontend application
+│   ├── public/             # Static files
+│   └── src/                # Source code
+│       ├── components/     # React components
+│       └── services/      # API services and utilities
+│
+├── .github/workflows/     # GitHub Actions workflows
+├── .tfsec.yml             # Security scanning configuration
+└── LICENSE                # MIT License
+```
+
 ## 🌟 Features
 
 - **User Authentication**: Secure JWT-based authentication system
-- **Thought Management**: Create, view, and manage your thoughts
+- **Thought Management**: Create, view, and manage thoughts
 - **Responsive Design**: Works on desktop and mobile devices
-- **Scalable Architecture**: Built with cloud-native principles
+- **Cloud-Native**: Deployed on AWS with infrastructure as code
 - **CI/CD**: Automated testing and deployment pipeline
 
-## 🚀 Quick Start
+## 🛠️ Development Setup
 
 ### Prerequisites
 
 - [Go](https://golang.org/dl/) 1.21+ (for backend)
 - [Node.js](https://nodejs.org/) 16+ and npm (for frontend)
-- [Terraform](https://www.terraform.io/downloads.html) 1.0.0+
-- [AWS CLI](https://aws.amazon.com/cli/) configured with appropriate credentials
-- [Docker](https://www.docker.com/) (for containerized deployment)
+- [Terraform](https://www.terraform.io/downloads.html) 1.0.0+ (for infrastructure)
+- [AWS CLI](https://aws.amazon.com/cli/) (for deployment)
+- [Docker](https://www.docker.com/) (optional, for containerized development)
 
 ### Local Development
 
@@ -51,6 +83,8 @@ A full-stack web application for sharing and managing thoughts, built with Go (b
    npm start
    ```
 
+4. Access the application at `http://localhost:3000`
+
 ### Environment Variables
 
 #### Backend
@@ -61,70 +95,91 @@ A full-stack web application for sharing and managing thoughts, built with Go (b
 #### Frontend
 - `REACT_APP_API_URL` - URL of the backend API (default: http://localhost:8080/api)
 
-4. Access the application at `http://localhost:3000`
+## ☁️ Production Deployment
 
-## 🏗️ Deployment
+### Infrastructure Overview
 
-### Infrastructure as Code
+The application is deployed on AWS with the following components:
 
-The application is deployed on AWS using Terraform. The infrastructure includes:
+- **Frontend**
+  - S3 bucket for static assets
+  - CloudFront CDN for global distribution
+  - HTTPS with custom domain support
+  - Cache invalidation on deployment
 
-- **Frontend**: S3 + CloudFront (CDN)
-- **Backend**: EC2 instance with auto-scaling
-- **Database**: RDS (PostgreSQL)
-- **Networking**: VPC, subnets, security groups
-- **Security**: IAM roles, KMS encryption, WAF
+- **Backend**
+  - EC2 instance (t3.micro)
+  - Auto Scaling Group for high availability
+  - Application Load Balancer
+  - Security groups with least-privilege access
 
-### Deployment Steps
+- **Data**
+  - RDS PostgreSQL database
+  - Automated backups
+  - Encryption at rest and in transit
 
-1. **Configure AWS credentials**
-   ```bash
-   aws configure
-   ```
+- **Security**
+  - IAM roles with least privilege
+  - KMS encryption for sensitive data
+  - Web Application Firewall (WAF)
+  - Security group rules
 
-2. **Initialize Terraform**
+### Deployment Process
+
+1. **Prerequisites**
+   - AWS account with appropriate permissions
+   - Domain name (optional)
+   - SSL certificate in AWS Certificate Manager
+
+2. **Deploy Infrastructure**
    ```bash
    cd deployment/terraform
    terraform init
-   ```
-
-3. **Review the plan**
-   ```bash
    terraform plan
-   ```
-
-4. **Deploy the infrastructure**
-   ```bash
    terraform apply
    ```
 
-5. **Access the application**
+3. **Deploy Frontend**
+   ```bash
+   cd ../../frontend
+   npm run build
+   # The build will be automatically uploaded to S3 by Terraform
+   ```
+
+4. **Access the Application**
    - Frontend URL: `https://d27gaeqjiw3uw0.cloudfront.net`
    - Backend API: `http://ec2-xxx-xxx-xxx-xxx.compute-1.amazonaws.com/api`
 
-## 🛠️ Project Structure
+### CI/CD Pipeline
 
+The project includes GitHub Actions workflows for:
+- Automated testing on pull requests
+- Frontend deployment on push to main
+- Security scanning with tfsec and Checkov
+
+## 🔧 Maintenance
+
+### Database Migrations
+
+```bash
+cd backend
+go run cmd/backend/main.go migrate
 ```
-.
-├── backend/               # Go backend application
-│   ├── cmd/               # Application entry points
-│   ├── internal/          # Core application logic
-│   ├── pkg/               # Reusable packages
-│   └── Dockerfile         # Container configuration
-│
-├── frontend/             # React frontend application
-│   ├── public/            # Static files
-│   ├── src/               # React components and logic
-│   └── Dockerfile         # Container configuration
-│
-├── deployment/           # Infrastructure as Code
-│   └── terraform/         # Terraform configurations
-│       ├── modules/       # Reusable modules
-│       ├── main.tf        # Main configuration
-│       └── variables.tf   # Variable definitions
-│
-└── .github/workflows/    # CI/CD pipelines
-```
+
+### Monitoring
+
+- CloudWatch Logs for application logs
+- CloudWatch Metrics for performance monitoring
+- S3 access logs for audit trails
+- CloudFront access logs
+
+### Scaling
+
+- **Horizontal Scaling**: Adjust the `desired_capacity` in the Auto Scaling Group
+- **Vertical Scaling**: Update the `instance_type` in Terraform config
+- **Database**: Consider RDS read replicas for read-heavy workloads
+
+
 
 ## 🔒 Security
 
