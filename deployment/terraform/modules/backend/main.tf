@@ -30,10 +30,23 @@ locals {
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
-# Create a CloudWatch log group for the instance
+# Create a KMS key for CloudWatch Logs
+resource "aws_kms_key" "cloudwatch_logs" {
+  description             = "KMS key for CloudWatch Logs encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+  
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-cloudwatch-logs-key"
+    Environment = var.environment
+  }
+}
+
+# Create a CloudWatch log group for the instance with KMS encryption
 resource "aws_cloudwatch_log_group" "instance_logs" {
   name              = "/aws/ec2/${var.app_name}-${var.environment}-instance"
   retention_in_days = 30
+  kms_key_id        = aws_kms_key.cloudwatch_logs.arn
   
   tags = {
     Name        = "${var.app_name}-${var.environment}-instance-logs"

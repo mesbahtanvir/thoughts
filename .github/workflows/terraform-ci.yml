@@ -65,6 +65,7 @@ jobs:
         framework: terraform
         quiet: true
         soft_fail: true
+        working_directory: ./deployment/terraform
         
     # Generate a plan for informational purposes on pull requests
     - name: Terraform Plan
