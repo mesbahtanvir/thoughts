@@ -45,8 +45,8 @@ services:
     ports:
       - "8000:8080"
     environment:
-      - JWT_SECRET=${jwt_secret}
-      - ENVIRONMENT=${environment}
+      - JWT_SECRET=$${jwt_secret}
+      - ENVIRONMENT=$${environment}
       - PORT=8080
     volumes:
       - app_data:/app/data
@@ -80,8 +80,8 @@ fi
 
 # Login to GitHub Container Registry
 echo "Logging in to GitHub Container Registry..."
-if [ -n "$GITHUB_TOKEN" ]; then
-    echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${GITHUB_USERNAME:-mesbahtanvir} --password-stdin
+if [ -n "\$GITHUB_TOKEN" ]; then
+    echo "\$GITHUB_TOKEN" | docker login ghcr.io -u \${GITHUB_USERNAME:-mesbahtanvir} --password-stdin
 else
     echo "WARNING: GITHUB_TOKEN not set, skipping container registry login"
 fi
@@ -99,9 +99,9 @@ chmod +x /home/ubuntu/app/start.sh
 chown -R ubuntu:ubuntu /home/ubuntu/app
 
 # Create a systemd service for the application
-cat > /etc/systemd/system/${app_name}.service << EOL
+cat > /etc/systemd/system/$${app_name}.service << 'SERVICE_EOF'
 [Unit]
-Description=${app_name} Backend Service
+Description=$${app_name} Backend Service
 After=docker.service
 Requires=docker.service
 
@@ -111,7 +111,7 @@ RemainAfterExit=yes
 WorkingDirectory=/home/ubuntu/app
 EnvironmentFile=/home/ubuntu/app/.env
 Environment=GITHUB_USERNAME=mesbahtanvir
-Environment=GITHUB_TOKEN=${github_token}
+Environment=GITHUB_TOKEN=$${github_token}
 ExecStart=/home/ubuntu/app/start.sh
 ExecStop=/usr/bin/docker-compose down
 Restart=on-failure
@@ -120,7 +120,7 @@ Group=ubuntu
 
 [Install]
 WantedBy=multi-user.target
-EOL
+SERVICE_EOF
 
 # Configure Nginx as a reverse proxy
 cat > /etc/nginx/sites-available/default << 'EOL'
@@ -146,7 +146,7 @@ systemctl enable docker
 systemctl start docker
 systemctl enable nginx
 systemctl restart nginx
-systemctl enable ${app_name}.service
+systemctl enable $${app_name}.service
 
 # Reboot to apply all updates
 reboot
